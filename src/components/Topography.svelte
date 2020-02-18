@@ -1,8 +1,20 @@
 <script>
+    // CODE INSPIRATION / SOURCES
+    //
+    // Ways of drawing a smooth curve
+    // https://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas
+    //
+    // MDN quadraticCurveTo
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/quadraticCurveTo
+    //
+    // Moving A Point Along Ellipse
+    // https://stackoverflow.com/questions/14863188/moving-a-point-along-ellipse
+
 	import { renderable, getRandomInt } from '../game.js';
 
     export let rendered = false
-    export const force_render = false
+    export let debug = true
+    export let force_render = false
 
 	renderable(props => {
         if (!force_render && rendered) {
@@ -25,7 +37,7 @@
         const steps = circleEnd / min_points
 
         let points = []
-        for (let i = 0 * Math.PI; i < circleEnd; i += steps) {
+        for (let i = circleStart; i < circleEnd; i += steps) {
             let min_x = (dimensions.width / 2) - (spacing * 1)
             let max_x = (dimensions.width / 2)
             let rx = getRandomInt(min_x, max_x)
@@ -66,11 +78,13 @@
             context.strokeStyle = 'black';
             context.stroke();
 
-            // Start and end points
-            context.beginPath();
-            context.fillStyle = 'red';
-            context.arc(p1.x, p1.y, 2, 0, 2 * Math.PI);
-            context.fill();
+            if (debug) {
+                // draw point
+                context.beginPath();
+                context.fillStyle = 'red';
+                context.arc(p1.x, p1.y, 2, 0, 2 * Math.PI);
+                context.fill();
+            }
         }
 
         rendered = true
