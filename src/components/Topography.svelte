@@ -10,18 +10,18 @@
     // Moving A Point Along Ellipse
     // https://stackoverflow.com/questions/14863188/moving-a-point-along-ellipse
 
-	import { renderable, getRandomInt } from '../game.js';
+    import { renderable, getRandomInt } from '../game.js';
 
     export let rendered = false
     export let debug = true
     export let force_render = false
 
-	renderable(props => {
+    renderable(props => {
         if (!force_render && rendered) {
             return;
         }
 
-		const { context, width, height } = props;
+        const { context, width, height } = props;
 
         const spacing = 50
         const center = { x: 500, y: 400 }
@@ -88,7 +88,7 @@
         }
 
         rendered = true
-	});
+    });
 </script>
 
 <slot></slot>
