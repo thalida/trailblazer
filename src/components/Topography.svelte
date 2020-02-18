@@ -1,6 +1,18 @@
 <script>
 	import { renderable, getRandomInt } from '../game.js';
+    export const BORDER_TOP = 'top'
+    export const BORDER_RIGHT = 'right'
+    export const BORDER_BOTTOM = 'bottom'
+    export const BORDER_LEFT = 'left'
+    export const border_order = [BORDER_TOP, BORDER_RIGHT, BORDER_BOTTOM, BORDER_LEFT]
+    export let borders = {}
+    export let points = []
+
     export let rendered = false
+    export let spacing = 50
+    export let center = { x: 500, y: 400 }
+    export let max_size = { width: 300, height: 300 }
+
 
 	renderable(props => {
         if (rendered) {
@@ -9,12 +21,6 @@
 
 		const { context, width, height } = props;
 
-        const center = {
-            x: 150,
-            y: 75,
-        }
-        const spacing = 50
-        const max_size = { width: 300, height: 150 }
         const min_coords = {
             x: center.x - Math.ceil(max_size.width/2),
             y: center.y - Math.ceil(max_size.height/2),
@@ -28,89 +34,46 @@
             y: Math.floor(max_size.height / spacing),
         }
 
-        let borders = {
-            top: [],
-            right: [],
-            bottom: [],
-            left: [],
-        }
+        for (let side_i = 0, num_sides = border_order.length; side_i < num_sides; side_i++) {
+            const side = border_order[side_i]
+            const isHorizontal = side === BORDER_TOP || side === BORDER_BOTTOM
+            let min_x, min_y, max_x, max_y
+            let prev_point = null
 
-        for (let side = 0; side < 2; side += 1) {
-            const isTop = side === 0
-            let min_y, max_y;
-            if (isTop) {
+            if (side === 'top') {
                 min_y = min_coords.y,
-                max_y = min_coords.y + spacing
-            } else {
-                min_y = max_coords.y - spacing,
+                max_y = min_coords.y + (spacing * 1)
+            } else if (side === 'bottom') {
+                min_y = max_coords.y - (spacing * 1),
                 max_y = max_coords.y
-            }
-
-            let last_coords = null
-
-            for (let xi = 0; xi < num_segments.x; xi += 1) {
-                let x, y
-                // const curveOutward = Math.random() >= 0.5
-                const curveOutward = true
-
-                const min_x = min_coords.x + (spacing * xi)
-                const max_x = min_coords.x + (spacing * (xi + 1))
-
-                let foundX = false
-                while (!foundX) {
-                    x = getRandomInt(min_x, max_x)
-                    foundX = (
-                        last_coords === null
-                        || Math.abs(last_coords.x - x) >= Math.floor(spacing / 4)
-                    )
-                }
-
-                let foundY = false
-                while (!foundY) {
-                    y = getRandomInt(min_y, max_y)
-                    foundY = (
-                        last_coords === null
-                        || Math.abs(last_coords.y - y) >= Math.floor(spacing / 4)
-                    )
-                }
-
-                if (isTop) {
-                    borders.top.push({x, y, curveOutward})
-                } else {
-                    borders.bottom.push({x, y, curveOutward})
-                }
-
-                last_coords = {x, y}
-            }
-        }
-
-        for (let side = 0; side < 2; side += 1) {
-            const isLeft = side === 0
-            let min_x, max_x;
-            if (isLeft) {
+            } else if (side === 'left') {
                 min_x = min_coords.x,
-                max_x = min_coords.x + spacing
-            } else {
-                min_x = max_coords.x - spacing,
+                max_x = min_coords.x + (spacing * 1)
+            } else if (side === 'right') {
+                min_x = max_coords.x - (spacing * 1),
                 max_x = max_coords.x
             }
 
-            let last_coords = null
-
-            for (let yi = 1; yi < num_segments.y - 1; yi += 1) {
+            const segments = (isHorizontal) ? num_segments.x : num_segments.y
+            const start_idx = (isHorizontal) ? 0 : 1
+            const end_idx = (isHorizontal) ? segments : segments - 1
+            for (let si = start_idx; si < end_idx; si += 1) {
                 let x, y
-                // const curveOutward = Math .random() >= 0.5
-                const curveOutward = true
 
-                const min_y = min_coords.y + (spacing * yi)
-                const max_y = min_coords.y + (spacing * (yi + 1))
+                if (isHorizontal) {
+                    min_x = min_coords.x + (spacing * si)
+                    max_x = min_coords.x + (spacing * (si + 1))
+                } else {
+                    min_y = min_coords.y + (spacing * si)
+                    max_y = min_coords.y + (spacing * (si + 1))
+                }
 
                 let foundX = false
                 while (!foundX) {
                     x = getRandomInt(min_x, max_x)
                     foundX = (
-                        last_coords === null
-                        || Math.abs(last_coords.x - x) >= Math.floor(spacing / 4)
+                        prev_point === null
+                        || Math.abs(prev_point.x - x) >= Math.floor(spacing / 4)
                     )
                 }
 
@@ -118,76 +81,50 @@
                 while (!foundY) {
                     y = getRandomInt(min_y, max_y)
                     foundY = (
-                        last_coords === null
-                        || Math.abs(last_coords.y - y) >= Math.floor(spacing / 4)
+                        prev_point === null
+                        || Math.abs(prev_point.y - y) >= Math.floor(spacing / 4)
                     )
                 }
 
-                if (isLeft) {
-                    borders.left.push({x, y, curveOutward})
-                } else {
-                    borders.right.push({x, y, curveOutward})
-                }
+                const new_point = {x, y}
+                borders[side] = borders[side] || []
+                borders[side].push(new_point)
+                prev_point = new_point
+            }
 
-                last_coords = {x, y}
+            if (side === BORDER_TOP || side === BORDER_RIGHT) {
+                points = points.concat(borders[side])
+            } else {
+                points = points.concat(borders[side].reverse())
             }
         }
 
-        let points = [
-            ...borders.top,
-            ...borders.right,
-            ...borders.bottom.reverse(),
-            ...borders.left.reverse(),
-        ]
-
 		context.clearRect(0, 0, width, height);
-
-        console.log(num_segments, min_coords, max_coords, points)
 
         for (let i = 0; i < points.length; i += 1) {
             const nextIdx = ((i + 1) >= points.length) ? 0 : i + 1
 
             const {x: x1, y: y1} = points[i];
-            const {x: x2, y: y2, curveOutward: curveOutward} = points[nextIdx];
-            const opt_a = {x: x1, y: y2}
-            const opt_b = {x: x2, y: y1}
-            const d_a = Math.sqrt(Math.pow(opt_a.x - center.x, 2) + Math.pow(opt_a.y - center.y, 2))
-            const d_b = Math.sqrt(Math.pow(opt_b.x - center.x, 2) + Math.pow(opt_b.y - center.y, 2))
+            const {x: x2, y: y2} = points[nextIdx];
 
-            let cp;
-            if (curveOutward) {
-                if (d_a > d_b) {
-                    cp = opt_a
-                } else {
-                    cp = opt_b
-                }
-            } else {
-                if (d_a < d_b) {
-                    cp = opt_a
-                } else {
-                    cp = opt_b
-                }
-            }
+            let x_mid = (x1 + x2) / 2;
+            let y_mid = (y1 + y2) / 2;
+            let cp_x1 = (x_mid + x1) / 2;
+            let cp_x2 = (x_mid +x2) / 2;
 
             context.beginPath();
             context.moveTo(x1, y1);
             context.quadraticCurveTo(
-                cp.x, cp.y,
+                cp_x1, y1,
+                x_mid, y_mid
+            );
+            context.quadraticCurveTo(
+                cp_x2, y2,
                 x2, y2
             );
             context.lineWidth = 2;
             context.strokeStyle = 'black';
             context.stroke();
-
-            context.fillStyle = 'red';
-            context.beginPath();
-            context.arc(x2, y2, 5, 0, 2 * Math.PI);  // End point
-            context.fill();
-
-            context.fillStyle = 'blue';
-            context.beginPath();
-            context.arc(cp.x, cp.y, 5, 0, 2 * Math.PI);  // End point
-            context.fill();
         }
 
         rendered = true
