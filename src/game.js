@@ -11,51 +11,54 @@ export const time = writable(0);
 
 // A more convenient store for grabbing all game props
 export const props = deriveObject({
-	context,
-	canvas,
-	width,
-	height,
-	pixelRatio,
-	time
+    context,
+    canvas,
+    width,
+    height,
+    pixelRatio,
+    time
 });
 
 export const key = Symbol();
 
-export const getState = () => {
-	const api = getContext(key);
-	return api.getState();
-};
-
-export const renderable = (render) => {
-	const api = getContext(key);
-	const element = {
-		ready: false,
-		mounted: false
-	};
-	if (typeof render === 'function') element.render = render;
-	else if (render) {
-		if (render.render) element.render = render.render;
-		if (render.setup) element.setup = render.setup;
-	}
-	api.add(element);
-	onMount(() => {
-		element.mounted = true;
-		return () => {
-			api.remove(element);
-			element.mounted = false;
-		};
-	});
+export const renderable = (render_callback) => {
+    const api = getContext(key);
+    const element = {
+        ready: false,
+        mounted: false
+    };
+    element.render = render_callback;
+    api.add(element);
+    onMount(() => {
+        element.mounted = true;
+        return () => {
+            api.remove(element);
+            element.mounted = false;
+        };
+    });
 }
 
-function deriveObject (obj) {
-	const keys = Object.keys(obj);
-	const list = keys.map(key => {
-		return obj[key];
-	});
-	return derived(list, (array) => {
-		return array.reduce((dict, value, i) => {
-			dict[keys[i]] = value;
-			return dict;
-		}, {});
-	});
+export function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+}
+
+export function getRandomIntInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive
+}
+
+function deriveObject(obj) {
+    const keys = Object.keys(obj);
+    const list = keys.map(key => {
+        return obj[key];
+    });
+    return derived(list, (array) => {
+        return array.reduce((dict, value, i) => {
+            dict[keys[i]] = value;
+            return dict;
+        }, {});
+    });
 }
