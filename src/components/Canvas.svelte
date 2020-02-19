@@ -34,6 +34,8 @@
 			entity.ready = true;
 		});
 
+		// window.scrollTo(document.body.scrollWidth / 2, document.body.scrollHeight / 2);
+
 		// start game loop
 		return createLoop((elapsed, dt) => {
 			time.set(elapsed);
@@ -88,9 +90,12 @@
 	}
 
 	function handleResize () {
-		width.set(window.innerWidth);
-		height.set(window.innerHeight);
+		const max_size = (window.screen.height > window.screen.width) ? window.screen.height : window.screen.width
+		const map_size = max_size + (max_size / 8)
+		width.set(map_size);
+		height.set(map_size);
 		pixelRatio.set(window.devicePixelRatio);
+		// window.scrollTo(document.body.scrollWidth / 2, document.body.scrollHeight / 2);
 	}
 </script>
 
@@ -100,5 +105,4 @@
 	height={$height * $pixelRatio}
 	style="width: {$width}px; height: {$height}px;"
 />
-<svelte:window on:resize|passive={handleResize} />
 <slot></slot>

@@ -2,8 +2,10 @@ import { getContext, onMount, onDestroy } from 'svelte';
 import { writable, derived } from 'svelte/store';
 
 // Some props for the app
-export const width = writable(window.innerWidth);
-export const height = writable(window.innerHeight);
+const max_size = (window.screen.height > window.screen.width) ? window.screen.height : window.screen.width
+const map_size = max_size + (max_size / 8)
+export const width = writable(map_size);
+export const height = writable(map_size);
 export const pixelRatio = writable(window.devicePixelRatio);
 export const context = writable();
 export const canvas = writable();

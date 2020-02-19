@@ -2,7 +2,7 @@
 	// import { width, height } from './game.js';
 
 	import Canvas from './components/Canvas.svelte';
-	import Topography from './components/Topography.svelte';
+	import Map from './components/Map.svelte';
 
 	// import { width, height } from './game.js';
 	// import Background from './Background.svelte';
@@ -13,7 +13,7 @@
 </script>
 
 <Canvas>
-	<Topography />
+	<Map />
 	<!-- <Background color='hsl(0, 0%, 10%)'>
 		<DotGrid divisions={30} color='hsla(0, 0%, 100%, 0.5)' />
 	</Background> -->
