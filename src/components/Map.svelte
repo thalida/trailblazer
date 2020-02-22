@@ -13,7 +13,7 @@
     import { renderable, getRandomInt, getRandomIntInclusive } from '../game.js';
 
     export const debug = false
-    export const render_once = true
+    export const render_once = false
     export let rendered = false
     export let feature_rules = {
         mountains: {min: 2, max: 2, num_slots: 9},
@@ -65,13 +65,13 @@
             const mountain = map.features.mountains[i]
             for (let ri = 0, rings = mountain.length; ri < rings; ri += 1) {
                 const ring = mountain[ri]
-                renderOneRing(context, ring, 'mountain')
+                renderPoints(context, ring, 'mountain')
             }
         }
 
         for (let i = 0, num_mountains = map.features.lakes.length; i < num_mountains; i += 1) {
             const lake = map.features.lakes[i]
-            renderOneRing(context, lake, 'lake')
+            renderPoints(context, lake, 'lake')
         }
 
         rendered = true
@@ -93,7 +93,7 @@
             }
 
             const lake_spacing = map.size * 0.05
-            const lake_min_size = Math.max(lake_spacing, map.slot_size / 6)
+            const lake_min_size = map.slot_size / 6
             const lake_max_size = map.slot_size / 1.5
             const lake_dimensions = {
                 width: getRandomIntInclusive(lake_min_size, lake_max_size),
@@ -242,7 +242,7 @@
         return points
     }
 
-    function renderOneRing (context, points, type) {
+    function renderPoints (context, points, type) {
         context.beginPath();
         context.moveTo(points[0].x, points[0].y);
 
@@ -268,7 +268,7 @@
 
         if (type === 'mountain') {
             context.lineWidth = 2;
-            context.strokeStyle = '#777';
+            context.strokeStyle = '#ccc';
             context.stroke();
         } else if (type === 'lake') {
             context.fillStyle = 'blue';
