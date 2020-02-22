@@ -1,5 +1,5 @@
 <script>
-import { getRandomInt, getRandomIntInclusive } from '../game.js'
+import { getRandomInt, getRandomIntInclusive } from '@/game.js'
 export default {
   // CODE INSPIRATION / SOURCES
   //
