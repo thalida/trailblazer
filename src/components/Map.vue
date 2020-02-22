@@ -35,7 +35,6 @@ export default {
 
   computed: {
     grid_size () {
-      console.log(this.canvas.size)
       let breakpoints = Object.keys(this.config.responsive_grids).map(k =>
         parseInt(k, 10)
       )
@@ -66,7 +65,7 @@ export default {
 
   render () {
     if (!this.canvas.context || !this.features) return
-    console.log(this.grid_size)
+
     for (
       let i = 0, num_mountains = this.features.mountains.length;
       i < num_mountains;
