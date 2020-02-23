@@ -16,78 +16,278 @@ export default {
   inject: ['canvas',],
 
   data () {
-    return {
-      debug: false,
-      config: {
-        mountains: { min: 2, max: 2, num_slots: 9, },
-        lakes: { min: 2, max: 4, },
-        rivers: { min: 1, max: 1, },
-        forests: { min: 2, max: 4, },
-        responsive_grids: {
-          500: 3,
-          1000: 5,
-        },
+    const MOUNTAIN_TILE_NAME = 'mountain'
+    const LAKE_TILE_NAME = 'lake'
+    const RIVER_TILE_NAME = 'river'
+    const FOREST_TILE_NAME = 'forest'
+
+    const MOUNTAIN_TILE_ID = 1
+    const LAKE_TILE_ID = 2
+    const RIVER_TILE_ID = 3
+    const FOREST_TILE_ID = 4
+
+    const tile_size = 100
+    const grid_size = 40
+    const canvas_size = tile_size * grid_size
+
+    let tile_config = {
+      mountain: {
+        name: MOUNTAIN_TILE_NAME,
+        id: MOUNTAIN_TILE_ID,
+        count: 0,
+        max_quantity: getRandomInt(10, grid_size),
+        min_size: 1,
+        max_size: 3,
       },
-      used_slots: [],
-      features: null,
+      lake: {
+        name: LAKE_TILE_NAME,
+        id: LAKE_TILE_ID,
+        count: 0,
+        max_quantity: getRandomInt(10, grid_size),
+        min_size: 1,
+        max_size: 2,
+      },
+      river: {
+        name: RIVER_TILE_NAME,
+        id: RIVER_TILE_ID,
+        count: 0,
+        max_quantity: getRandomInt(
+          grid_size,
+          Math.floor(Math.sqrt(grid_size ** 2 * 2))
+        ),
+        min_size: 1,
+        max_size: 1,
+      },
+      forest: {
+        name: FOREST_TILE_NAME,
+        id: FOREST_TILE_ID,
+        count: 0,
+        max_quantity: getRandomInt(10, grid_size),
+        min_size: 1,
+        max_size: 3,
+      },
+    }
+    const tile_types = Object.keys(tile_config)
+    const total_tile_types = tile_types.length
+
+    let tiles = []
+    for (let i = 0; i < grid_size; i++) {
+      tiles.push(new Array(grid_size))
+    }
+    let total_tiles = grid_size ** 2
+    let total_used_tiles = 0
+    let last_river_tile = { x: null, y: null, }
+
+    return {
+      MOUNTAIN_TILE_NAME,
+      LAKE_TILE_NAME,
+      RIVER_TILE_NAME,
+      FOREST_TILE_NAME,
+      MOUNTAIN_TILE_ID,
+      LAKE_TILE_ID,
+      RIVER_TILE_ID,
+      FOREST_TILE_ID,
+      tile_config,
+      tile_types,
+      total_tile_types,
+      tile_size,
+      canvas_size,
+      grid_size,
+      tiles,
+      total_tiles,
+      total_used_tiles,
+      last_river_tile,
     }
   },
 
   computed: {
-    grid_size () {
-      let breakpoints = Object.keys(this.config.responsive_grids).map(k =>
-        parseInt(k, 10)
-      )
-      breakpoints.push(this.canvas.size)
-      breakpoints.sort((a, b) => a - b)
-      const __tmp_size_idx = breakpoints.indexOf(this.canvas.size)
-      const breakpoint_idx =
-        __tmp_size_idx < breakpoints.length - 1
-          ? breakpoints[__tmp_size_idx + 1]
-          : breakpoints[__tmp_size_idx - 1]
-
-      return this.config.responsive_grids[breakpoint_idx]
-    },
-    slots () {
-      return [...new Array(this.grid_size ** 2).keys(),]
-    },
-    slot_size () {
-      return this.canvas.size / this.grid_size
+    total_remaining_tiles () {
+      return this.total_tiles - this.total_used_tiles
     },
   },
 
   mounted () {
-    this.features = {
-      mountains: this.generateMountains(),
-      lakes: this.generateLakes(),
+    this.generateTiles()
+
+    let output = ''
+    for (let x = 0; x < this.grid_size; x += 1) {
+      for (let y = 0; y < this.grid_size; y += 1) {
+        let tile = this.tiles[x][y] !== null ? this.tiles[x][y] + ' ' : '  '
+        output += tile
+      }
+      output += '\n'
     }
+
+    console.log(this.tiles)
+    console.log(output)
+    // this.features = {
+    //   mountains: this.generateMountains(),
+    //   lakes: this.generateLakes(),
+    // }
   },
 
   render () {
-    if (!this.canvas.context || !this.features) return
-
-    for (
-      let i = 0, num_mountains = this.features.mountains.length;
-      i < num_mountains;
-      i += 1
-    ) {
-      const mountain = this.features.mountains[i]
-      for (let ri = 0, rings = mountain.length; ri < rings; ri += 1) {
-        const ring = mountain[ri]
-        this.renderPoints(ring, 'mountain')
-      }
-    }
-    for (
-      let i = 0, num_mountains = this.features.lakes.length;
-      i < num_mountains;
-      i += 1
-    ) {
-      const lake = this.features.lakes[i]
-      this.renderPoints(lake, 'lake')
-    }
+    // if (!this.canvas.context || !this.features) return
+    // for (
+    //   let i = 0, num_mountains = this.features.mountains.length;
+    //   i < num_mountains;
+    //   i += 1
+    // ) {
+    //   const mountain = this.features.mountains[i]
+    //   for (let ri = 0, rings = mountain.length; ri < rings; ri += 1) {
+    //     const ring = mountain[ri]
+    //     this.renderPoints(ring, 'mountain')
+    //   }
+    // }
+    // for (
+    //   let i = 0, num_mountains = this.features.lakes.length;
+    //   i < num_mountains;
+    //   i += 1
+    // ) {
+    //   const lake = this.features.lakes[i]
+    //   this.renderPoints(lake, 'lake')
+    // }
   },
 
   methods: {
+    generateTiles () {
+      console.log(this.tile_config, this.tile_config.river.max_quantity)
+      for (let x = 0; x < this.grid_size; x += 1) {
+        for (let y = 0; y < this.grid_size; y += 1) {
+          let used_tiles = 0
+          let probabilities = this.getProbabilities(x, y)
+          // console.log(probabilities)
+
+          const rand = Math.random()
+          const ranges = Object.values(probabilities)
+          ranges.push(rand)
+          ranges.sort((a, b) => a - b)
+          const found_range_idx = ranges.indexOf(rand) + 1
+
+          if (found_range_idx < ranges.length) {
+            const found_range_val = ranges[found_range_idx]
+            const tile_name = Object.keys(probabilities).find(
+              k => probabilities[k] === found_range_val
+            )
+            const tile_config = this.tile_config[tile_name]
+            const tile_id = tile_config.id
+            const min_available_space = Math.min(
+              this.grid_size - x,
+              this.grid_size - y
+            )
+            const min_size = tile_config.min_size
+            const max_size = Math.min(tile_config.max_size, min_available_space)
+            const size = getRandomInt(min_size, max_size)
+
+            for (let xsize = 0; xsize < size; xsize += 1) {
+              for (let ysize = 0; ysize < size; ysize += 1) {
+                const tile_x = x + xsize
+                const tile_y = y + ysize
+                this.$set(this.tiles[tile_x], tile_y, tile_id)
+                used_tiles += 1
+              }
+            }
+
+            if (tile_id === this.RIVER_TILE_ID) {
+              this.last_river_tile = { x, y, }
+            }
+          } else {
+            this.$set(this.tiles[x], y, null)
+            used_tiles = 1
+          }
+
+          this.total_used_tiles += used_tiles
+        }
+      }
+    },
+    getProbabilities (x, y) {
+      let range = 0
+      let probabilities = {}
+      const surrounding_tiles = this.getSurroundingTiles(x, y)
+
+      for (let i = 0; i < this.total_tile_types; i += 1) {
+        const tile_type = this.tile_types[i]
+        const type_config = this.tile_config[tile_type]
+        const num_remaining = type_config.max_quantity - type_config.count
+        let chance = num_remaining / this.total_remaining_tiles
+
+        // surrounding_tiles.prev_tiles.indexOf(this.RIVER_TILE_ID) >= 0
+        if (
+          tile_type === this.RIVER_TILE_NAME &&
+          this.last_river_tile.x !== null &&
+          this.last_river_tile.y !== null
+        ) {
+          if (
+            this.last_river_tile.x <= x &&
+            x <= this.last_river_tile.x + 1 &&
+            this.last_river_tile.y <= y &&
+            y <= this.last_river_tile.y + 1
+          ) {
+            const open_river_tiles = this.getSurroundingTiles(
+              this.last_river_tile.x,
+              this.last_river_tile.y
+            ).num_open_next_tiles
+            chance = 1 / open_river_tiles
+          } else {
+            chance = 0
+          }
+        }
+
+        range += chance
+        probabilities[tile_type] = range
+      }
+      return probabilities
+    },
+    getSurroundingTiles (x, y) {
+      let tiles = []
+      let prev_tiles = []
+      let next_tiles = []
+      let num_open_tiles = 0
+      let num_open_prev_tiles = 0
+      let num_open_next_tiles = 0
+
+      for (let xi = -1; xi < 2; xi += 1) {
+        let tile_x = x + xi
+        if (tile_x < 0 || tile_x >= this.grid_size) {
+          continue
+        }
+
+        for (let yi = -1; yi < 2; yi += 1) {
+          let tile_y = y + yi
+          if (tile_y < 0 || tile_y >= this.grid_size) {
+            continue
+          }
+
+          if (tile_x === x && tile_y === y) {
+            continue
+          }
+
+          const tile = this.tiles[tile_x][tile_y]
+          const is_open = typeof tile === 'undefined'
+          tiles.push(tile)
+          num_open_tiles += is_open ? 1 : 0
+
+          if (xi < 0 || yi < 0) {
+            prev_tiles.push(tile)
+            num_open_prev_tiles += is_open ? 1 : 0
+          }
+
+          if (xi > 0 || yi > 0) {
+            next_tiles.push(tile)
+            num_open_next_tiles += is_open ? 1 : 0
+          }
+        }
+      }
+
+      return {
+        tiles,
+        prev_tiles,
+        next_tiles,
+        num_open_tiles,
+        num_open_prev_tiles,
+        num_open_next_tiles,
+      }
+    },
     generateLakes () {
       let lakes = []
       let available_slots = this.slots.slice(0)
