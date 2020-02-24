@@ -13,12 +13,12 @@
 <script>
 export default {
   data () {
-    const largest_screen_side =
-      window.screen.height > window.screen.width
-        ? window.screen.height
-        : window.screen.width
+    // const largest_screen_side =
+    //   window.screen.height > window.screen.width
+    //     ? window.screen.height
+    //     : window.screen.width
     const pixelRatio = window.devicePixelRatio
-    const size = largest_screen_side * pixelRatio
+    const size = 4000
     return {
       canvas: {
         context: null,
