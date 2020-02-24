@@ -1,5 +1,5 @@
 <script>
-import { getRandomInt, getRandomIntInclusive } from '@/game.js'
+import { settings, getRandomInt, getRandomIntInclusive } from '@/game.js'
 export default {
   // CODE INSPIRATION / SOURCES
   //
@@ -26,11 +26,8 @@ export default {
     const RIVER_TILE_ID = 3
     const FOREST_TILE_ID = 4
 
-    const tile_size = 100
-    const grid_size = 40
-    const canvas_size = tile_size * grid_size
     const max_feature_size = 5
-
+    const { tile_size, grid_size, } = settings
     let tile_config = {
       mountain: {
         name: MOUNTAIN_TILE_NAME,
@@ -96,12 +93,11 @@ export default {
       LAKE_TILE_ID,
       RIVER_TILE_ID,
       FOREST_TILE_ID,
+      tile_size,
+      grid_size,
       tile_config,
       tile_types,
       total_tile_types,
-      tile_size,
-      canvas_size,
-      grid_size,
       max_feature_size,
       tiles,
       points,
@@ -119,38 +115,7 @@ export default {
 
   mounted () {
     this.generateTiles()
-
-    let output = ''
-    output += '   | '
-    for (let xi = 0; xi < this.grid_size; xi += 1) {
-      if (
-        xi === 0 ||
-        xi === Math.floor(this.grid_size / 2) ||
-        xi === this.grid_size - 1
-      ) {
-        output += xi + ' |'
-      } else {
-        output += '  | '
-      }
-    }
-    output += '\n'
-    output += '    ' + '-'.repeat(this.grid_size * 4)
-    output += '\n'
-
-    for (let y = 0; y < this.grid_size; y += 1) {
-      if (y < 10) output += ' '
-      output += y + ' | '
-      for (let x = 0; x < this.grid_size; x += 1) {
-        let tile = this.tiles[x][y] !== null ? this.tiles[x][y] : ' '
-        output += tile + ' | '
-      }
-      output += '\n'
-      output += '    ' + '-'.repeat(this.grid_size * 4)
-      output += '\n'
-    }
-
-    console.log(this.points)
-    console.log(output)
+    this.renderConsoleMap()
   },
 
   render () {
@@ -388,10 +353,6 @@ export default {
     getSurroundingTiles (x, y, size) {
       size = size || 1
       let tiles = []
-      let prev_tiles = []
-      let next_tiles = []
-      let num_open_tiles = 0
-      let num_open_prev_tiles = 0
       let num_open_next_tiles = 0
 
       for (let xi = -1; xi < size + 1; xi += 1) {
@@ -413,26 +374,12 @@ export default {
           const tile = this.tiles[tile_x][tile_y]
           const is_open = typeof tile === 'undefined'
           tiles.push(tile)
-          num_open_tiles += is_open ? 1 : 0
-
-          if (xi < 0 || yi < 0) {
-            prev_tiles.push(tile)
-            num_open_prev_tiles += is_open ? 1 : 0
-          }
-
-          if (xi > 0 || yi > 0) {
-            next_tiles.push(tile)
-            num_open_next_tiles += is_open ? 1 : 0
-          }
+          num_open_next_tiles += is_open && (xi > 0 || yi > 0) ? 1 : 0
         }
       }
 
       return {
         tiles,
-        prev_tiles,
-        next_tiles,
-        num_open_tiles,
-        num_open_prev_tiles,
         num_open_next_tiles,
       }
     },
@@ -560,6 +507,38 @@ export default {
         context.stroke()
       }
       context.restore()
+    },
+    renderConsoleMap () {
+      let output = ''
+      output += '   | '
+      for (let xi = 0; xi < this.grid_size; xi += 1) {
+        if (
+          xi === 0 ||
+          xi === Math.floor(this.grid_size / 2) ||
+          xi === this.grid_size - 1
+        ) {
+          output += xi + ' |'
+        } else {
+          output += '  | '
+        }
+      }
+      output += '\n'
+      output += '    ' + '-'.repeat(this.grid_size * 4)
+      output += '\n'
+
+      for (let y = 0; y < this.grid_size; y += 1) {
+        if (y < 10) output += ' '
+        output += y + ' | '
+        for (let x = 0; x < this.grid_size; x += 1) {
+          let tile = this.tiles[x][y] !== null ? this.tiles[x][y] : ' '
+          output += tile + ' | '
+        }
+        output += '\n'
+        output += '    ' + '-'.repeat(this.grid_size * 4)
+        output += '\n'
+      }
+
+      console.log(output)
     },
   },
 }

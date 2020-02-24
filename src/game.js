@@ -1,3 +1,7 @@
+export const settings = {
+  tile_size: 100,
+  grid_size: 20,
+}
 export function getRandomInt (min, max) {
   min = Math.ceil(min)
   max = Math.floor(max)
