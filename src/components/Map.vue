@@ -1,7 +1,14 @@
 <template>
-  <div id="map" :style="{ width: `${map_size}px`, height: `${map_size}px` }">
-    <v-canvas v-for="feature in features" :key="feature.id" :size="map_size">
-      <v-map-feature :feature="feature" />
+  <div
+    id="map"
+    :style="{ width: `${max_scaled_size}px`, height: `${max_scaled_size}px` }"
+  >
+    <v-canvas
+      v-for="feature in features"
+      :key="feature.id"
+      :size="max_scaled_size"
+    >
+      <v-map-feature :feature="feature" :scale="scale" />
     </v-canvas>
   </div>
 </template>
@@ -27,23 +34,28 @@ export default {
         width: null,
         height: null,
       },
+      scale: 2,
+      max_zoom: 1,
       min_zoom: null,
       panzoom: null,
       IDS,
     }
   },
   computed: {
+    max_scaled_size () {
+      return this.map_size * this.scale
+    },
     ...mapState(['map_size', 'features', 'tiles',]),
   },
   created () {
     window.addEventListener('resize', this.onWindowResize)
   },
   mounted () {
-    const center = -1 * Math.floor(this.map_size / 2)
+    const center = -1 * Math.floor(this.max_scaled_size / 2)
     this.panzoom = panzoom(this.$el)
     this.setWindowDimensions()
     this.setPanzoomZoomLevels()
-    this.panzoom.moveTo(center, center)
+    this.panzoom.zoomTo(center, center, (this.min_zoom + this.max_zoom) / 3)
     this.panzoom.on('transform', this.onPanzoomTransform)
   },
   destroyed () {
@@ -68,10 +80,10 @@ export default {
         document.documentElement.clientHeight ||
         document.body.clientHeight
       const largest_dimension = width > height ? width : height
-      const size_diff = this.map_size - largest_dimension
+      const size_diff = this.max_scaled_size - largest_dimension
 
       this.window = { width, height, }
-      this.min_zoom = 1 - size_diff / this.map_size
+      this.min_zoom = 1 - size_diff / this.max_scaled_size
     },
     setPanzoomZoomLevels () {
       const { scale, } = this.panzoom.getTransform()
@@ -79,12 +91,12 @@ export default {
         this.panzoom.zoomTo(this.min_zoom)
       }
       this.panzoom.setMinZoom(this.min_zoom)
-      this.panzoom.setMaxZoom(1.5)
+      this.panzoom.setMaxZoom(this.max_zoom)
     },
     onPanzoomTransform () {
       const { x, y, scale, } = this.panzoom.getTransform()
       const { width, height, } = this.window
-      const scaled_size = this.map_size * scale
+      const scaled_size = this.max_scaled_size * scale
       const min_y = -1 * (scaled_size - height)
       const max_y = 0
       const min_x = -1 * (scaled_size - width)

@@ -4,7 +4,7 @@ import { IDS } from '@/game/map/settings.js'
 export default {
   inject: ['canvas',],
 
-  props: ['feature',],
+  props: ['feature', 'scale',],
 
   render () {
     if (!this.canvas.context) return
@@ -36,6 +36,7 @@ export default {
 
   methods: {
     renderPoints (points, feature_id, is_line) {
+      points = this.apply_scale(points, this.scale)
       is_line = is_line || false
       const context = this.canvas.context
       context.save()
@@ -103,6 +104,16 @@ export default {
         context.stroke()
       }
       context.restore()
+    },
+
+    apply_scale (points, scale) {
+      for (let i = 0, num_points = points.length; i < num_points; i += 1) {
+        let { x, y, } = points[i]
+        x *= scale
+        y *= scale
+        points[i] = { x, y, }
+      }
+      return points
     },
   },
 }
