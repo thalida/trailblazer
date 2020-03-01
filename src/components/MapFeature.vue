@@ -8,36 +8,34 @@ export default {
 
   render () {
     if (!this.canvas.context) return
-
-    if (this.feature.id === IDS.FOREST_FEATURE_ID) {
-      console.log('skipping forest')
-      return
-    }
-
-    const points = this.feature.render_points
-
-    if (!Array.isArray(points[0])) {
-      this.renderPoints(points, this.feature.id, true)
-    } else {
-      for (let fi = 0, num_feature = points.length; fi < num_feature; fi += 1) {
-        const feature = points[fi]
-        const has_nested_points = Array.isArray(feature[0])
-        if (has_nested_points) {
-          for (let ri = 0, rings = feature.length; ri < rings; ri += 1) {
-            const ring = feature[ri]
-            this.renderPoints(ring, this.feature.id)
-          }
-        } else {
-          this.renderPoints(feature, this.feature.id)
-        }
-      }
-    }
+    this.render_feature()
   },
 
   methods: {
-    renderPoints (points, feature_id, is_line) {
+    render_feature () {
+      if (this.feature.id === IDS.FOREST_FEATURE_ID) {
+        console.log('skipping forest')
+        return
+      }
+
+      const render_point_groups = this.feature.render_point_groups
+      for (let i = 0; i < render_point_groups.length; i += 1) {
+        const point_group = render_point_groups[i]
+        const has_nested_points = Array.isArray(point_group[0])
+
+        if (!has_nested_points) {
+          this.draw_points(point_group)
+          continue
+        }
+
+        for (let j = 0; j < point_group.length; j += 1) {
+          this.draw_points(point_group[j])
+        }
+      }
+    },
+    draw_points (points) {
       points = this.apply_scale(points, this.scale)
-      is_line = is_line || false
+      const is_line = this.feature.is_line || false
       const context = this.canvas.context
       context.save()
       context.beginPath()
@@ -87,14 +85,14 @@ export default {
           )
         }
       }
-      if (feature_id === IDS.MOUNTAIN_FEATURE_ID) {
+      if (this.feature.id === IDS.MOUNTAIN_FEATURE_ID) {
         context.lineWidth = 2
         context.strokeStyle = '#ccc'
         context.stroke()
-      } else if (feature_id === IDS.LAKE_FEATURE_ID) {
+      } else if (this.feature.id === IDS.LAKE_FEATURE_ID) {
         context.fillStyle = 'blue'
         context.fill()
-      } else if (feature_id === IDS.RIVER_FEATURE_ID) {
+      } else if (this.feature.id === IDS.RIVER_FEATURE_ID) {
         context.lineWidth = 4
         context.strokeStyle = 'blue'
         context.stroke()

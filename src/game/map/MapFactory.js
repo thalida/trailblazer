@@ -21,8 +21,9 @@ export default class MapFactory {
         quantity: 0,
         min_size: 2,
         max_size: 3,
+        is_line: false,
         allow_touching: 'never',
-        render_points: [],
+        render_point_groups: [],
         count: 0,
         last_placed_tile: { x: null, y: null, size: null, },
       },
@@ -34,7 +35,8 @@ export default class MapFactory {
         quantity: 0,
         min_size: 1,
         max_size: 2,
-        render_points: [],
+        is_line: false,
+        render_point_groups: [],
         count: 0,
         last_placed_tile: { x: null, y: null, size: null, },
       },
@@ -47,7 +49,8 @@ export default class MapFactory {
         min_size: 1,
         max_size: 1,
         allow_touching: 'always',
-        render_points: [],
+        is_line: true,
+        render_point_groups: [],
         count: 0,
         last_placed_tile: { x: null, y: null, size: null, },
       },
@@ -59,7 +62,8 @@ export default class MapFactory {
         quantity: 0,
         min_size: 1,
         max_size: 4,
-        render_points: [],
+        is_line: false,
+        render_point_groups: [],
         count: 0,
         last_placed_tile: { x: null, y: null, size: null, },
       },
@@ -212,7 +216,14 @@ export default class MapFactory {
         }
 
         features[feature.id].last_placed_tile = { x, y, size, }
-        features[feature.id].render_points.push(feature_points)
+        if (feature.id === IDS.RIVER_FEATURE_ID) {
+          if (features[feature.id].render_point_groups.length === 0) {
+            features[feature.id].render_point_groups.push([])
+          }
+          features[feature.id].render_point_groups[0].push(feature_points)
+        } else {
+          features[feature.id].render_point_groups.push(feature_points)
+        }
         features[feature.id].count += 1
         num_tiles_remaining -= used_tiles
       }
