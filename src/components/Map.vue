@@ -23,6 +23,11 @@ export default {
   },
   data () {
     return {
+      window: {
+        width: null,
+        height: null,
+      },
+      min_zoom: null,
       panzoom: null,
       IDS,
     }
@@ -30,33 +35,30 @@ export default {
   computed: {
     ...mapState(['map_size', 'features', 'tiles',]),
   },
+  created () {
+    window.addEventListener('resize', this.onWindowResize)
+  },
   mounted () {
-    const width =
-      window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.body.clientWidth
-    const height =
-      window.innerHeight ||
-      document.documentElement.clientHeight ||
-      document.body.clientHeight
-    const largest_side = width > height ? width : height
-    const size_diff = this.map_size - largest_side
-    const size_ratio = 1 - size_diff / this.map_size
-    this.panzoom = panzoom(this.$el, {
-      maxZoom: 1.5,
-      minZoom: size_ratio,
-    })
-    this.panzoom.moveTo(
-      -1 * Math.floor(this.map_size / 2),
-      -1 * Math.floor(this.map_size / 2)
-    )
+    const center = -1 * Math.floor(this.map_size / 2)
+    this.panzoom = panzoom(this.$el)
+    this.setWindowDimensions()
+    this.setPanzoomZoomLevels()
+    this.panzoom.moveTo(center, center)
     this.panzoom.on('transform', this.onPanzoomTransform)
+  },
+  destroyed () {
+    window.removeEventListener('resize', this.onWindowResize)
+    this.$el.removeEventListener('wheel', this.panzoom.zoomWithWheel)
+    this.$el.removeEventListener('panzoomchange', this.onPanzoomChange)
   },
 
   methods: {
-    onPanzoomTransform (pz) {
-      const { x, y, scale, } = pz.getTransform()
-      const scaled_size = this.map_size * scale
+    onWindowResize () {
+      this.setWindowDimensions()
+      this.setPanzoomZoomLevels()
+      this.onPanzoomTransform()
+    },
+    setWindowDimensions () {
       const width =
         window.innerWidth ||
         document.documentElement.clientWidth ||
@@ -65,7 +67,24 @@ export default {
         window.innerHeight ||
         document.documentElement.clientHeight ||
         document.body.clientHeight
+      const largest_dimension = width > height ? width : height
+      const size_diff = this.map_size - largest_dimension
 
+      this.window = { width, height, }
+      this.min_zoom = 1 - size_diff / this.map_size
+    },
+    setPanzoomZoomLevels () {
+      const { scale, } = this.panzoom.getTransform()
+      if (this.min_zoom > scale) {
+        this.panzoom.zoomTo(this.min_zoom)
+      }
+      this.panzoom.setMinZoom(this.min_zoom)
+      this.panzoom.setMaxZoom(1.5)
+    },
+    onPanzoomTransform () {
+      const { x, y, scale, } = this.panzoom.getTransform()
+      const { width, height, } = this.window
+      const scaled_size = this.map_size * scale
       const min_y = -1 * (scaled_size - height)
       const max_y = 0
       const min_x = -1 * (scaled_size - width)
@@ -87,7 +106,7 @@ export default {
         new_y = y > max_y ? max_y : min_y
       }
 
-      pz.moveTo(new_x, new_y)
+      this.panzoom.moveTo(new_x, new_y)
     },
   },
 }
