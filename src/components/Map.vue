@@ -1,37 +1,37 @@
 <template>
-  <div class="canvas">
-    <canvas
-      ref="canvas"
-      :width="canvas.size"
-      :height="canvas.size"
-      :style="{ width: `${canvas.size}px`, height: `${canvas.size}px` }"
-    ></canvas>
-    <slot></slot>
+  <div id="map" :style="{ width: `${size}px`, height: `${size}px` }">
+    <v-canvas :size="size" v-for="feature in features" :key="feature.id">
+      <v-map-feature :feature="feature" />
+    </v-canvas>
   </div>
 </template>
 
 <script>
 import panzoom from 'panzoom'
-import { settings } from '@/game.js'
+import { mapState } from 'vuex'
+
+import { IDS } from '@/game/map/settings.js'
+
+import Canvas from '@/components/Canvas.vue'
+import MapFeature from '@/components/MapFeature.vue'
+
 export default {
+  name: 'Map',
+  props: ['size',],
+  components: {
+    'v-canvas': Canvas,
+    'v-map-feature': MapFeature,
+  },
   data () {
-    const size = settings.tile_size * settings.grid_size
     return {
       panzoom: null,
-      canvas: {
-        context: null,
-        size,
-      },
+      IDS,
     }
   },
-
-  provide () {
-    return { canvas: this.canvas, }
+  computed: {
+    ...mapState(['features', 'tiles',]),
   },
-
   mounted () {
-    let $canvas = this.$refs['canvas']
-    this.canvas.context = $canvas.getContext('2d')
     const width =
       window.innerWidth ||
       document.documentElement.clientWidth ||
@@ -41,19 +41,23 @@ export default {
       document.documentElement.clientHeight ||
       document.body.clientHeight
     const largest_side = width > height ? width : height
-    const size_diff = this.canvas.size - largest_side
-    const size_ratio = 1 - size_diff / this.canvas.size
-    this.panzoom = panzoom($canvas, {
+    const size_diff = this.size - largest_side
+    const size_ratio = 1 - size_diff / this.size
+    this.panzoom = panzoom(this.$el, {
       maxZoom: 1.5,
       minZoom: size_ratio,
     })
     this.panzoom.moveTo(
-      -1 * Math.floor(this.canvas.size / 2),
-      -1 * Math.floor(this.canvas.size / 2)
+      -1 * Math.floor(this.size / 2),
+      -1 * Math.floor(this.size / 2)
     )
-    this.panzoom.on('transform', pz => {
+    this.panzoom.on('transform', this.onPanzoomTransform)
+  },
+
+  methods: {
+    onPanzoomTransform (pz) {
       const { x, y, scale, } = pz.getTransform()
-      const scaled_size = this.canvas.size * scale
+      const scaled_size = this.size * scale
       const width =
         window.innerWidth ||
         document.documentElement.clientWidth ||
@@ -62,7 +66,6 @@ export default {
         window.innerHeight ||
         document.documentElement.clientHeight ||
         document.body.clientHeight
-
       const min_y = -1 * (scaled_size - height)
       const max_y = 0
       const min_x = -1 * (scaled_size - width)
@@ -85,7 +88,16 @@ export default {
       }
 
       pz.moveTo(new_x, new_y)
-    })
+    },
   },
 }
 </script>
+
+<style lang="scss">
+#map {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+</style>
