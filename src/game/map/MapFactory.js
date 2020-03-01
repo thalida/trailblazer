@@ -496,13 +496,12 @@ export default class MapFactory {
       dimensions.height <= variance
     ) {
       if (dimensions.width < dimensions.height) {
-        variance = dimensions.width / 3
+        variance = dimensions.width / 2
       } else {
-        variance = dimensions.height / 3
+        variance = dimensions.height / 2
       }
-    } else {
-      variance = variance / 2
     }
+    variance = variance / 2
     const circleEnd = 2 * Math.PI
     const steps = circleEnd / num_points
     for (let i = 0; i < circleEnd; i += steps) {
