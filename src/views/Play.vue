@@ -1,6 +1,6 @@
 <template>
   <div class="play">
-    <v-map v-if="show_map" />
+    <v-map v-if="show_map" v-once />
   </div>
 </template>
 

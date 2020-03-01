@@ -129,5 +129,6 @@ export default {
   position: relative;
   overflow: hidden;
   background: rgb(203, 236, 222);
+  border: 4px solid red;
 }
 </style>
