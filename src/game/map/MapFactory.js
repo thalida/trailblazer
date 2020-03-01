@@ -449,9 +449,10 @@ export default class MapFactory {
       const has_right_branch = getRandomBoolean()
 
       trees.leaves.push(this.generateRingPoints(center, dimensions, 0, 5))
+
       trees.trunks.push([
         { x: center.x, y: center.y, },
-        { x: center.x, y: center.y + dimensions.height / 1.5, },
+        { x: center.x, y: center.y + dimensions.height / 1.2, },
       ])
 
       if (has_left_branch) {
@@ -460,12 +461,15 @@ export default class MapFactory {
           dimensions.width / 4
         )
         const branch_y = getRandomIntInclusive(
-          center.y + dimensions.height / 6,
-          center.y - dimensions.height / 4
+          center.y - dimensions.height / 4,
+          center.y + dimensions.height / 4
         )
+        const branch_trunk_y =
+          center.y +
+          getRandomIntInclusive(dimensions.height / 6, dimensions.height / 4)
         trees.branches.push([
           { x: center.x - branch_length, y: branch_y, },
-          { x: center.x, y: center.y, },
+          { x: center.x, y: branch_trunk_y, },
         ])
       }
 
@@ -475,12 +479,15 @@ export default class MapFactory {
           dimensions.width / 4
         )
         const branch_y = getRandomIntInclusive(
-          center.y + dimensions.height / 6,
-          center.y - dimensions.height / 4
+          center.y - dimensions.height / 4,
+          center.y + dimensions.height / 4
         )
+        const branch_trunk_y =
+          center.y +
+          getRandomIntInclusive(dimensions.height / 6, dimensions.height / 4)
         trees.branches.push([
           { x: center.x + branch_length, y: branch_y, },
-          { x: center.x, y: center.y, },
+          { x: center.x, y: branch_trunk_y, },
         ])
       }
     }

@@ -109,7 +109,12 @@ export default {
       } else if (type === 'leaves') {
         context.fillStyle = 'rgba(33, 218, 141, 0.7)'
         context.fill()
-      } else if (type === 'trunks' || type === 'branches') {
+      } else if (type === 'trunks') {
+        context.lineWidth = 8
+        context.lineCap = 'round'
+        context.strokeStyle = 'rgba(206, 171, 154, 1)'
+        context.stroke()
+      } else if (type === 'branches') {
         context.lineWidth = 6
         context.lineCap = 'round'
         context.strokeStyle = 'rgba(206, 171, 154, 1)'
