@@ -33,10 +33,9 @@ export default {
       window: {
         width: null,
         height: null,
+        largest_dimension: null,
       },
       scale: 2,
-      max_zoom: 1,
-      min_zoom: null,
       panzoom: null,
       IDS,
     }
@@ -51,11 +50,9 @@ export default {
     window.addEventListener('resize', this.onWindowResize)
   },
   mounted () {
-    const center = -1 * Math.floor(this.max_scaled_size / 2)
     this.panzoom = panzoom(this.$el)
     this.setWindowDimensions()
-    this.setPanzoomZoomLevels()
-    this.panzoom.zoomTo(center, center, (this.min_zoom + this.max_zoom) / 3)
+    this.setPanzoomZoomLevels(true)
     this.panzoom.on('transform', this.onPanzoomTransform)
   },
   destroyed () {
@@ -71,54 +68,80 @@ export default {
       this.onPanzoomTransform()
     },
     setWindowDimensions () {
-      const width =
-        window.innerWidth ||
-        document.documentElement.clientWidth ||
-        document.body.clientWidth
-      const height =
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        document.body.clientHeight
+      const width = document.documentElement.clientWidth
+      const height = document.documentElement.clientHeight
       const largest_dimension = width > height ? width : height
-      const size_diff = this.max_scaled_size - largest_dimension
-
-      this.window = { width, height, }
-      this.min_zoom = 1 - size_diff / this.max_scaled_size
+      this.window = { width, height, largest_dimension, }
     },
-    setPanzoomZoomLevels () {
+    setPanzoomZoomLevels (center_panzoom) {
+      const min_zoom = this.window.largest_dimension / this.max_scaled_size
+      const max_zoom = 1
       const { scale, } = this.panzoom.getTransform()
-      if (this.min_zoom > scale) {
-        this.panzoom.zoomTo(this.min_zoom)
+
+      this.panzoom.setMinZoom(min_zoom)
+      this.panzoom.setMaxZoom(max_zoom)
+
+      if (scale < min_zoom) {
+        this.panzoom.zoomTo(0, 0, min_zoom)
       }
-      this.panzoom.setMinZoom(this.min_zoom)
-      this.panzoom.setMaxZoom(this.max_zoom)
+
+      if (center_panzoom) {
+        const middle_zoom = (max_zoom - min_zoom) / 2
+        const zoomed_size = this.max_scaled_size * middle_zoom
+        const center = -1 * Math.floor(zoomed_size / 2)
+        this.panzoom.zoomTo(center, center, middle_zoom)
+      }
     },
     onPanzoomTransform () {
-      const { x, y, scale, } = this.panzoom.getTransform()
-      const { width, height, } = this.window
-      const scaled_size = this.max_scaled_size * scale
-      const min_y = -1 * (scaled_size - height)
-      const max_y = 0
-      const min_x = -1 * (scaled_size - width)
-      const max_x = 0
-      const is_valid_x = min_x <= x && x <= max_x
-      const is_valid_y = min_y <= y && y <= max_y
-
-      if (is_valid_x && is_valid_y) {
-        return
-      }
-
-      let new_x = x
-      let new_y = y
-
-      if (!is_valid_x) {
-        new_x = x > max_x ? max_x : min_x
-      }
-      if (!is_valid_y) {
-        new_y = y > max_y ? max_y : min_y
-      }
-
-      this.panzoom.moveTo(new_x, new_y)
+      // const { x, y, scale, } = this.panzoom.getTransform()
+      // console.log({ x, y, scale, })
+      // const { width, height, } = this.window
+      // const scaled_size = this.max_scaled_size * scale
+      // // const min_x = -8000
+      // // const min_y = -1 * (scaled_size - 500)
+      // // const min_y = -1 * (height * scale) + 900
+      // // const min_y = -1 * (height - 100)
+      // const min_x = -1 * (scaled_size - width)
+      // const min_y = -1 * (scaled_size - height)
+      // const max_x = 0
+      // const max_y = 0
+      // const is_valid_x = min_x <= x && x <= max_x
+      // const is_valid_y = min_y <= y && y <= max_y
+      // console.log(
+      //   'x, y',
+      //   x,
+      //   y,
+      //   'scale',
+      //   scale,
+      //   'w, h',
+      //   width,
+      //   height,
+      //   'height scaled',
+      //   height * scale,
+      //   'scaled_size',
+      //   scaled_size,
+      //   'min x,y ',
+      //   min_x,
+      //   min_y,
+      //   'max x,y ',
+      //   max_x,
+      //   max_y,
+      //   'is_valid',
+      //   is_valid_x,
+      //   is_valid_y
+      // )
+      // if (is_valid_x && is_valid_y) {
+      //   return
+      // }
+      // let new_x = x
+      // let new_y = y
+      // if (!is_valid_x) {
+      //   new_x = x > max_x ? max_x : min_x
+      // }
+      // if (!is_valid_y) {
+      //   new_y = y > max_y ? max_y : min_y
+      // }
+      // this.panzoom.moveTo(new_x, new_y)
     },
   },
 }

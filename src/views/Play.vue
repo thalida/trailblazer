@@ -1,5 +1,5 @@
 <template>
-  <div class="play">
+  <div id="play">
     <v-map v-if="show_map" v-once />
   </div>
 </template>
@@ -72,3 +72,11 @@ export default {
   },
 }
 </script>
+<style lang="scss">
+#play {
+  position: relative;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+</style>
