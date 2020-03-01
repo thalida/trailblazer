@@ -128,5 +128,6 @@ export default {
 #map {
   position: relative;
   overflow: hidden;
+  background: rgb(203, 236, 222);
 }
 </style>

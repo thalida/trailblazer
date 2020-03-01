@@ -1,5 +1,9 @@
 import { IDS } from '@/game/map/settings.js'
-import { getRandomInt, getRandomIntInclusive } from '@/game/helpers.js'
+import {
+  getRandomInt,
+  getRandomIntInclusive,
+  getRandomBoolean
+} from '@/game/helpers.js'
 
 export default class MapFactory {
   constructor ({ grid_size, tile_size, }) {
@@ -11,7 +15,7 @@ export default class MapFactory {
     return { tiles, features, }
   }
 
-  setupFeatures (grid_size) {
+  setupFeatures (grid_size, tile_size) {
     let features = {
       [IDS.MOUNTAIN_FEATURE_ID]: {
         id: IDS.MOUNTAIN_FEATURE_ID,
@@ -19,9 +23,10 @@ export default class MapFactory {
         min_quantity: Math.ceil(grid_size / 4),
         max_quantity: grid_size,
         quantity: 0,
-        min_size: 2,
-        max_size: 3,
+        min_size: 1,
+        max_size: 5,
         is_line: false,
+        point_per_tile: 2,
         allow_touching: 'never',
         render_point_groups: [],
         count: 0,
@@ -60,8 +65,12 @@ export default class MapFactory {
         min_quantity: Math.ceil(grid_size / 4),
         max_quantity: grid_size,
         quantity: 0,
-        min_size: 1,
-        max_size: 4,
+        min_size: 2,
+        max_size: 6,
+        min_tree_size: tile_size / 4,
+        max_tree_size: tile_size / 2,
+        min_tree_density: 3,
+        max_tree_density: 5,
         is_line: false,
         render_point_groups: [],
         count: 0,
@@ -90,7 +99,7 @@ export default class MapFactory {
   }
 
   generateMap ({ grid_size, tile_size, }) {
-    let features = this.setupFeatures(grid_size)
+    let features = this.setupFeatures(grid_size, tile_size)
     let tiles = this.setupTiles(grid_size)
     let num_tiles_remaining = grid_size ** 2
     const max_feature_size = this.getLargestFeatureSize(features)
@@ -168,7 +177,7 @@ export default class MapFactory {
           }
         }
 
-        const spacing = tile_size / 2
+        const spacing = tile_size
         const min_position = {
           x: tile_size * x,
           y: tile_size * y,
@@ -183,20 +192,20 @@ export default class MapFactory {
         }
         let feature_points = null
         if (feature.id === IDS.MOUNTAIN_FEATURE_ID) {
-          const min_render_size = tile_size / 2 + (size - 1) * tile_size
+          const min_render_size = tile_size + (size - 1) * tile_size
           const max_render_size = size * tile_size
-          const feature_size = getRandomIntInclusive(
-            min_render_size,
-            max_render_size
-          )
-          const dimensions = { width: feature_size, height: feature_size, }
+          const width = getRandomIntInclusive(min_render_size, max_render_size)
+          const height = getRandomIntInclusive(min_render_size, max_render_size)
+          const dimensions = { width: width, height: height, }
+          const max_points = feature.point_per_tile * size * 2
+          const min_points = feature.point_per_tile * 2
           feature_points = this.generateNestedRings(
             center,
             dimensions,
             spacing,
-            16,
-            4,
-            2
+            max_points,
+            min_points,
+            4
           )
         } else if (feature.id === IDS.LAKE_FEATURE_ID) {
           const min_render_size = tile_size / 2 + (size - 1) * tile_size
@@ -213,6 +222,21 @@ export default class MapFactory {
           )
         } else if (feature.id === IDS.RIVER_FEATURE_ID) {
           feature_points = this.generatePoint(min_position, max_position)
+        } else if (feature.id === IDS.FOREST_FEATURE_ID) {
+          const tree_density = getRandomIntInclusive(
+            feature.min_tree_density,
+            feature.max_tree_density
+          )
+          const num_trees = size * tree_density
+          const min_tree_size = feature.min_tree_size
+          const max_tree_size = feature.max_tree_size
+          feature_points = this.generateTrees({
+            num_trees,
+            min_tree_size,
+            max_tree_size,
+            min_position,
+            max_position,
+          })
         }
 
         features[feature.id].last_placed_tile = { x, y, size, }
@@ -396,9 +420,81 @@ export default class MapFactory {
     return rings
   }
 
+  generateTrees ({
+    num_trees,
+    min_tree_size,
+    max_tree_size,
+    min_position,
+    max_position,
+  }) {
+    let trees = {
+      trunks: [],
+      branches: [],
+      leaves: [],
+    }
+    for (let i = 0; i < num_trees; i += 1) {
+      const dimensions = {
+        width: getRandomIntInclusive(min_tree_size, max_tree_size),
+        height: getRandomIntInclusive(min_tree_size, max_tree_size),
+      }
+      const min_x = min_position.x + dimensions.width / 2
+      const max_x = max_position.x - dimensions.width / 2
+      const min_y = min_position.y + dimensions.height / 2
+      const max_y = max_position.y - dimensions.height / 2
+      const center = {
+        x: getRandomIntInclusive(min_x, max_x),
+        y: getRandomIntInclusive(min_y, max_y),
+      }
+      const has_left_branch = getRandomBoolean()
+      const has_right_branch = getRandomBoolean()
+
+      trees.leaves.push(this.generateRingPoints(center, dimensions, 0, 5))
+      trees.trunks.push([
+        { x: center.x, y: center.y, },
+        { x: center.x, y: center.y + dimensions.height / 1.5, },
+      ])
+
+      if (has_left_branch) {
+        const branch_length = getRandomIntInclusive(
+          dimensions.width / 6,
+          dimensions.width / 4
+        )
+        const branch_y = getRandomIntInclusive(
+          center.y + dimensions.height / 6,
+          center.y - dimensions.height / 4
+        )
+        trees.branches.push([
+          { x: center.x - branch_length, y: branch_y, },
+          { x: center.x, y: center.y, },
+        ])
+      }
+
+      if (has_right_branch) {
+        const branch_length = getRandomIntInclusive(
+          dimensions.width / 6,
+          dimensions.width / 4
+        )
+        const branch_y = getRandomIntInclusive(
+          center.y + dimensions.height / 6,
+          center.y - dimensions.height / 4
+        )
+        trees.branches.push([
+          { x: center.x + branch_length, y: branch_y, },
+          { x: center.x, y: center.y, },
+        ])
+      }
+    }
+
+    return trees
+  }
+
   generateRingPoints (center, dimensions, variance, num_points) {
     let points = []
-    if (dimensions.width <= variance || dimensions.height <= variance) {
+    if (
+      variance === null ||
+      dimensions.width <= variance ||
+      dimensions.height <= variance
+    ) {
       if (dimensions.width < dimensions.height) {
         variance = dimensions.width / 3
       } else {

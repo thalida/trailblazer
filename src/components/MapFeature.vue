@@ -8,32 +8,41 @@ export default {
 
   render () {
     if (!this.canvas.context) return
-    this.render_feature()
+    this.render_feature(this.feature.render_point_groups)
   },
 
   methods: {
-    render_feature () {
-      if (this.feature.id === IDS.FOREST_FEATURE_ID) {
-        console.log('skipping forest')
-        return
-      }
+    render_feature (point_groups, type) {
+      type = type || this.feature.id
+      for (let i = 0; i < point_groups.length; i += 1) {
+        const group = point_groups[i]
+        const is_array = Array.isArray(group)
+        const is_object = typeof group === 'object'
+        const has_nested_arrays = Array.isArray(group[0])
 
-      const render_point_groups = this.feature.render_point_groups
-      for (let i = 0; i < render_point_groups.length; i += 1) {
-        const point_group = render_point_groups[i]
-        const has_nested_points = Array.isArray(point_group[0])
-
-        if (!has_nested_points) {
-          this.draw_points(point_group)
+        if (is_array && !has_nested_arrays) {
+          this.draw_points(group, type)
           continue
         }
 
-        for (let j = 0; j < point_group.length; j += 1) {
-          this.draw_points(point_group[j])
+        if (is_array) {
+          for (let j = 0; j < group.length; j += 1) {
+            this.render_feature([group[j],], type)
+          }
+        }
+
+        if (!is_array && is_object) {
+          for (let [key, points,] of Object.entries(group)) {
+            if (points.length === 0) {
+              continue
+            }
+            this.render_feature(points, key)
+          }
         }
       }
     },
-    draw_points (points) {
+    draw_points (points, type) {
+      type = type || this.feature.id
       points = this.apply_scale(points, this.scale)
       const is_line = this.feature.is_line || false
       const context = this.canvas.context
@@ -85,16 +94,25 @@ export default {
           )
         }
       }
-      if (this.feature.id === IDS.MOUNTAIN_FEATURE_ID) {
-        context.lineWidth = 2
+      if (type === IDS.MOUNTAIN_FEATURE_ID) {
+        context.lineWidth = 6
         context.strokeStyle = '#ccc'
         context.stroke()
-      } else if (this.feature.id === IDS.LAKE_FEATURE_ID) {
-        context.fillStyle = 'blue'
+      } else if (type === IDS.LAKE_FEATURE_ID) {
+        context.fillStyle = 'rgb(63, 104, 255)'
         context.fill()
-      } else if (this.feature.id === IDS.RIVER_FEATURE_ID) {
-        context.lineWidth = 4
-        context.strokeStyle = 'blue'
+      } else if (type === IDS.RIVER_FEATURE_ID) {
+        context.lineWidth = 12
+        context.lineCap = 'round'
+        context.strokeStyle = 'rgb(63, 104, 255)'
+        context.stroke()
+      } else if (type === 'leaves') {
+        context.fillStyle = 'rgba(33, 218, 141, 0.7)'
+        context.fill()
+      } else if (type === 'trunks' || type === 'branches') {
+        context.lineWidth = 6
+        context.lineCap = 'round'
+        context.strokeStyle = 'rgba(206, 171, 154, 1)'
         context.stroke()
       } else {
         context.lineWidth = 2
