@@ -1,6 +1,6 @@
 <template>
   <div class="play">
-    <v-map v-if="rendered" :size="MAP_SIZE" />
+    <v-map v-if="show_map" />
   </div>
 </template>
 
@@ -18,35 +18,33 @@ export default {
   },
   data () {
     return {
-      TILE_SIZE,
-      GRID_SIZE,
-      MAP_SIZE,
-      rendered: false,
+      show_map: false,
     }
   },
   computed: {
-    ...mapState(['features', 'tiles',]),
+    ...mapState(['features', 'tiles', 'map_size',]),
   },
   mounted () {
     let { tiles, features, } = new MapFactory({
-      grid_size: this.GRID_SIZE,
-      tile_size: this.TILE_SIZE,
+      grid_size: GRID_SIZE,
+      tile_size: TILE_SIZE,
     })
+    this.$store.dispatch('set_map_size', MAP_SIZE)
     this.$store.dispatch('set_tiles', tiles)
     this.$store.dispatch('set_features', features)
     this.renderConsoleMap()
-    this.rendered = true
+    this.show_map = true
   },
 
   methods: {
     renderConsoleMap () {
       let output = ''
       output += '   | '
-      for (let xi = 0; xi < this.GRID_SIZE; xi += 1) {
+      for (let xi = 0; xi < GRID_SIZE; xi += 1) {
         if (
           xi === 0 ||
-          xi === Math.floor(this.GRID_SIZE / 2) ||
-          xi === this.GRID_SIZE - 1
+          xi === Math.floor(GRID_SIZE / 2) ||
+          xi === GRID_SIZE - 1
         ) {
           output += xi + ' |'
         } else {
@@ -54,18 +52,18 @@ export default {
         }
       }
       output += '\n'
-      output += '    ' + '-'.repeat(this.GRID_SIZE * 4)
+      output += '    ' + '-'.repeat(GRID_SIZE * 4)
       output += '\n'
 
-      for (let y = 0; y < this.GRID_SIZE; y += 1) {
+      for (let y = 0; y < GRID_SIZE; y += 1) {
         if (y < 10) output += ' '
         output += y + ' | '
-        for (let x = 0; x < this.GRID_SIZE; x += 1) {
+        for (let x = 0; x < GRID_SIZE; x += 1) {
           let tile = this.tiles[x][y] !== null ? this.tiles[x][y] : ' '
           output += tile + ' | '
         }
         output += '\n'
-        output += '    ' + '-'.repeat(this.GRID_SIZE * 4)
+        output += '    ' + '-'.repeat(GRID_SIZE * 4)
         output += '\n'
       }
 

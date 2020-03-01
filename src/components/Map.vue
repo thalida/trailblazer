@@ -1,6 +1,6 @@
 <template>
-  <div id="map" :style="{ width: `${size}px`, height: `${size}px` }">
-    <v-canvas :size="size" v-for="feature in features" :key="feature.id">
+  <div id="map" :style="{ width: `${map_size}px`, height: `${map_size}px` }">
+    <v-canvas v-for="feature in features" :key="feature.id" :size="map_size">
       <v-map-feature :feature="feature" />
     </v-canvas>
   </div>
@@ -17,7 +17,6 @@ import MapFeature from '@/components/MapFeature.vue'
 
 export default {
   name: 'Map',
-  props: ['size',],
   components: {
     'v-canvas': Canvas,
     'v-map-feature': MapFeature,
@@ -29,7 +28,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['features', 'tiles',]),
+    ...mapState(['map_size', 'features', 'tiles',]),
   },
   mounted () {
     const width =
@@ -41,15 +40,15 @@ export default {
       document.documentElement.clientHeight ||
       document.body.clientHeight
     const largest_side = width > height ? width : height
-    const size_diff = this.size - largest_side
-    const size_ratio = 1 - size_diff / this.size
+    const size_diff = this.map_size - largest_side
+    const size_ratio = 1 - size_diff / this.map_size
     this.panzoom = panzoom(this.$el, {
       maxZoom: 1.5,
       minZoom: size_ratio,
     })
     this.panzoom.moveTo(
-      -1 * Math.floor(this.size / 2),
-      -1 * Math.floor(this.size / 2)
+      -1 * Math.floor(this.map_size / 2),
+      -1 * Math.floor(this.map_size / 2)
     )
     this.panzoom.on('transform', this.onPanzoomTransform)
   },
@@ -57,7 +56,7 @@ export default {
   methods: {
     onPanzoomTransform (pz) {
       const { x, y, scale, } = pz.getTransform()
-      const scaled_size = this.size * scale
+      const scaled_size = this.map_size * scale
       const width =
         window.innerWidth ||
         document.documentElement.clientWidth ||
@@ -66,6 +65,7 @@ export default {
         window.innerHeight ||
         document.documentElement.clientHeight ||
         document.body.clientHeight
+
       const min_y = -1 * (scaled_size - height)
       const max_y = 0
       const min_x = -1 * (scaled_size - width)
@@ -96,8 +96,6 @@ export default {
 <style lang="scss">
 #map {
   position: relative;
-  height: 100vh;
-  width: 100vw;
   overflow: hidden;
 }
 </style>
