@@ -2,9 +2,9 @@
   <div class="canvas">
     <canvas
       ref="canvas"
-      :width="canvas.size"
-      :height="canvas.size"
-      :style="{ width: `${canvas.size}px`, height: `${canvas.size}px` }"
+      :width="size"
+      :height="size"
+      :style="{ width: `${size}px`, height: `${size}px` }"
     ></canvas>
     <slot></slot>
   </div>
@@ -12,18 +12,12 @@
 
 <script>
 export default {
+  props: ['size',],
+
   data () {
-    const largest_screen_side =
-      window.screen.height > window.screen.width
-        ? window.screen.height
-        : window.screen.width
-    const pixelRatio = window.devicePixelRatio
-    const size = largest_screen_side * pixelRatio
     return {
       canvas: {
         context: null,
-        pixelRatio,
-        size,
       },
     }
   },
@@ -33,7 +27,16 @@ export default {
   },
 
   mounted () {
-    this.canvas.context = this.$refs['canvas'].getContext('2d')
+    let $canvas = this.$refs['canvas']
+    this.canvas.context = $canvas.getContext('2d')
   },
 }
 </script>
+
+<style lang="scss">
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+</style>
