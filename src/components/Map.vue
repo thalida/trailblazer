@@ -93,55 +93,27 @@ export default {
       }
     },
     onPanzoomTransform () {
-      // const { x, y, scale, } = this.panzoom.getTransform()
-      // console.log({ x, y, scale, })
-      // const { width, height, } = this.window
-      // const scaled_size = this.max_scaled_size * scale
-      // // const min_x = -8000
-      // // const min_y = -1 * (scaled_size - 500)
-      // // const min_y = -1 * (height * scale) + 900
-      // // const min_y = -1 * (height - 100)
-      // const min_x = -1 * (scaled_size - width)
-      // const min_y = -1 * (scaled_size - height)
-      // const max_x = 0
-      // const max_y = 0
-      // const is_valid_x = min_x <= x && x <= max_x
-      // const is_valid_y = min_y <= y && y <= max_y
-      // console.log(
-      //   'x, y',
-      //   x,
-      //   y,
-      //   'scale',
-      //   scale,
-      //   'w, h',
-      //   width,
-      //   height,
-      //   'height scaled',
-      //   height * scale,
-      //   'scaled_size',
-      //   scaled_size,
-      //   'min x,y ',
-      //   min_x,
-      //   min_y,
-      //   'max x,y ',
-      //   max_x,
-      //   max_y,
-      //   'is_valid',
-      //   is_valid_x,
-      //   is_valid_y
-      // )
-      // if (is_valid_x && is_valid_y) {
-      //   return
-      // }
-      // let new_x = x
-      // let new_y = y
-      // if (!is_valid_x) {
-      //   new_x = x > max_x ? max_x : min_x
-      // }
-      // if (!is_valid_y) {
-      //   new_y = y > max_y ? max_y : min_y
-      // }
-      // this.panzoom.moveTo(new_x, new_y)
+      const { x, y, scale, } = this.panzoom.getTransform()
+      const { width, height, } = this.window
+      const scaled_size = this.max_scaled_size * scale
+      const min_x = -1 * (scaled_size - width)
+      const min_y = -1 * (scaled_size - height)
+      const max_x = 0
+      const max_y = 0
+      const is_valid_x = min_x <= x && x <= max_x
+      const is_valid_y = min_y <= y && y <= max_y
+      if (is_valid_x && is_valid_y) {
+        return
+      }
+      let new_x = x
+      let new_y = y
+      if (!is_valid_x) {
+        new_x = x > max_x ? max_x : min_x
+      }
+      if (!is_valid_y) {
+        new_y = y > max_y ? max_y : min_y
+      }
+      this.panzoom.moveTo(new_x, new_y)
     },
   },
 }
