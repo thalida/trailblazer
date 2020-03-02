@@ -76,10 +76,23 @@ export default class MapFactory {
         count: 0,
         last_placed_tile: { x: null, y: null, size: null, },
       },
+      [IDS.TERRAIN_FEATURE_ID]: {
+        id: IDS.TERRAIN_FEATURE_ID,
+        name: 'terrain',
+        is_filler: true,
+        is_line: true,
+        render_point_groups: [],
+        count: 0,
+      },
     }
 
     for (let kv of Object.entries(features)) {
       let feature = kv[1]
+
+      if (feature.is_filler) {
+        continue
+      }
+
       feature.quantity = getRandomIntInclusive(
         feature.min_quantity,
         feature.max_quantity
@@ -191,6 +204,9 @@ export default class MapFactory {
 
           let feature_sizes = {}
           for (let [id, feature,] of Object.entries(features)) {
+            if (feature.is_filler) {
+              continue
+            }
             const min_size = Math.min(feature.min_size, max_available_space)
             const max_size = Math.min(feature.max_size, max_available_space)
             feature_sizes[id] = getRandomIntInclusive(min_size, max_size)
@@ -311,6 +327,38 @@ export default class MapFactory {
       }
     }
 
+    let terrain_set = []
+    for (let y = 0; y < grid_size; y += 1) {
+      for (let x = 0; x < grid_size; x += 1) {
+        let tile = tiles[x][y]
+        let valid_tile = tile === null || tile == IDS.FOREST_FEATURE_ID
+        if (!valid_tile) {
+          features[IDS.TERRAIN_FEATURE_ID].render_point_groups.push(terrain_set)
+          features[IDS.TERRAIN_FEATURE_ID].count += terrain_set.length
+          terrain_set = []
+          continue
+        }
+
+        const min_position = {
+          x: tile_size * x,
+          y: tile_size * y,
+        }
+        const max_position = {
+          x: tile_size * (x + 1),
+          y: tile_size * (y + 1),
+        }
+
+        let feature_points = this.generatePoint(min_position, max_position)
+        terrain_set.push(feature_points)
+        tiles[x][y] += IDS.TERRAIN_FEATURE_ID
+        num_tiles_remaining -= 1
+      }
+
+      features[IDS.TERRAIN_FEATURE_ID].render_point_groups.push(terrain_set)
+      features[IDS.TERRAIN_FEATURE_ID].count += terrain_set.length
+      terrain_set = []
+    }
+
     return {
       tiles,
       features,
@@ -333,6 +381,11 @@ export default class MapFactory {
     for (let i = 0; i < feature_ids.length; i += 1) {
       const __tmp_feature_id = feature_ids[i]
       const feature = features[__tmp_feature_id]
+
+      if (feature.is_filler) {
+        continue
+      }
+
       const num_remaining = feature.quantity - feature.count
 
       if (num_remaining <= 0 || num_tiles_remaining <= 0) {

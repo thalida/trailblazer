@@ -40,5 +40,9 @@ export default {
   height: 100%;
   top: 0;
   left: 0;
+
+  &.feature--terrain {
+    z-index: -4;
+  }
 }
 </style>

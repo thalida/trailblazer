@@ -14,6 +14,7 @@ export default {
   methods: {
     render_feature (point_groups, type) {
       type = type || this.feature.id
+
       for (let i = 0; i < point_groups.length; i += 1) {
         const group = point_groups[i]
         const is_array = Array.isArray(group)
@@ -42,6 +43,10 @@ export default {
       }
     },
     draw_points (points, type) {
+      if (points.length === 0) {
+        return
+      }
+
       type = type || this.feature.id
       points = this.apply_scale(points, this.scale)
       const is_line = this.feature.is_line || false
@@ -94,7 +99,7 @@ export default {
           )
         }
       }
-      if (type === IDS.MOUNTAIN_FEATURE_ID) {
+      if (type === IDS.MOUNTAIN_FEATURE_ID || type === IDS.TERRAIN_FEATURE_ID) {
         context.lineWidth = 6
         context.strokeStyle = '#ccc'
         context.stroke()

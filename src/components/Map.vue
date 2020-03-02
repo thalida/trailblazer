@@ -4,6 +4,7 @@
     :style="{ width: `${max_scaled_size}px`, height: `${max_scaled_size}px` }"
   >
     <v-canvas
+      :class="`feature--${feature.name}`"
       v-for="feature in features"
       :key="feature.id"
       :size="max_scaled_size"
