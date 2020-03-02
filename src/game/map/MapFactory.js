@@ -111,62 +111,120 @@ export default class MapFactory {
         if (typeof tile !== 'undefined') {
           continue
         }
-        let max_available_space = 1
-        let search = 1
-        while (search < max_feature_size) {
-          if (x + search >= grid_size || y + search >= grid_size) {
-            break
-          }
 
-          const right_tile = tiles[x + search][y]
-          const down_tile = tiles[x][y + search]
-          const diag_tile = tiles[x + search][y + search]
-
-          if (
-            typeof right_tile === 'undefined' &&
-            typeof down_tile === 'undefined' &&
-            typeof diag_tile === 'undefined'
-          ) {
-            max_available_space += 1
-            search += 1
-          } else {
-            break
-          }
-        }
-
-        let feature_sizes = {}
-        for (let [id, feature,] of Object.entries(features)) {
-          const min_size = Math.min(feature.min_size, max_available_space)
-          const max_size = Math.min(feature.max_size, max_available_space)
-          feature_sizes[id] = getRandomIntInclusive(min_size, max_size)
-        }
-
-        let probabilities = this.getProbabilities({
-          x,
-          y,
+        const last_river_tile = features[IDS.RIVER_FEATURE_ID].last_placed_tile
+        const surrounding_tiles = this.getSurroundingTiles(
           tiles,
-          num_tiles_remaining,
-          features,
-          feature_sizes,
-          grid_size,
-        })
-        const ranges = Object.values(probabilities)
-        const rand = Math.random()
-        ranges.push(rand)
-        ranges.sort((a, b) => a - b)
-        const found_range_idx = ranges.indexOf(rand) + 1
-        if (found_range_idx > ranges.length - 1) {
-          tiles[x][y] = null
-          num_tiles_remaining -= 1
-          continue
+          last_river_tile.x,
+          last_river_tile.y,
+          grid_size
+        )
+        const potential_river_tiles = surrounding_tiles.open_next_tiles
+        const force_tile_river =
+          potential_river_tiles.length === 1 &&
+          potential_river_tiles[0].x === x &&
+          potential_river_tiles[0].y === y
+
+        let feature, size
+        if (force_tile_river) {
+          feature = features[IDS.RIVER_FEATURE_ID]
+          size = 1
+        } else {
+          let max_available_space = 1
+          let search = 1
+          while (search < max_feature_size) {
+            if (x + search >= grid_size || y + search >= grid_size) {
+              break
+            }
+
+            const right_tile_coords = {
+              x: x + search,
+              y,
+            }
+            const down_tile_coords = {
+              x,
+              y: y + search,
+            }
+            const diag_tile_coords = {
+              x: x + search,
+              y: y + search,
+            }
+
+            const right_tile = tiles[right_tile_coords.x][right_tile_coords.y]
+            const down_tile = tiles[down_tile_coords.x][down_tile_coords.y]
+            const diag_tile = tiles[diag_tile_coords.x][diag_tile_coords.y]
+
+            let near_river_tile = false
+            for (let si = 0; si < potential_river_tiles.length; si += 1) {
+              const prt = potential_river_tiles[si]
+              const matches_curr = prt.x === x && prt.y === y
+              const matches_right =
+                prt.x === right_tile_coords.x && prt.y === right_tile_coords.y
+              const matches_down =
+                prt.x === down_tile_coords.x && prt.y === down_tile_coords.y
+              const matches_diag =
+                prt.x === diag_tile_coords.x && prt.y === diag_tile_coords.y
+
+              if (
+                matches_curr ||
+                matches_right ||
+                matches_down ||
+                matches_diag
+              ) {
+                near_river_tile = true
+                break
+              }
+            }
+
+            if (
+              !near_river_tile &&
+              typeof right_tile === 'undefined' &&
+              typeof down_tile === 'undefined' &&
+              typeof diag_tile === 'undefined'
+            ) {
+              max_available_space += 1
+              search += 1
+            } else {
+              break
+            }
+          }
+
+          let feature_sizes = {}
+          for (let [id, feature,] of Object.entries(features)) {
+            const min_size = Math.min(feature.min_size, max_available_space)
+            const max_size = Math.min(feature.max_size, max_available_space)
+            feature_sizes[id] = getRandomIntInclusive(min_size, max_size)
+          }
+
+          let probabilities = this.getProbabilities({
+            x,
+            y,
+            tiles,
+            num_tiles_remaining,
+            features,
+            feature_sizes,
+            grid_size,
+          })
+          const ranges = Object.values(probabilities)
+          const rand = Math.random()
+          ranges.push(rand)
+          ranges.sort((a, b) => a - b)
+          const found_range_idx = ranges.indexOf(rand) + 1
+          if (found_range_idx > ranges.length - 1) {
+            tiles[x][y] = null
+            num_tiles_remaining -= 1
+            continue
+          }
+
+          const found_range_val = ranges[found_range_idx]
+          const __tmp_feature_id = Object.keys(probabilities).find(
+            k => probabilities[k] === found_range_val
+          )
+
+          feature = features[__tmp_feature_id]
+          size = feature_sizes[feature.id]
         }
 
-        const found_range_val = ranges[found_range_idx]
-        const __tmp_feature_id = Object.keys(probabilities).find(
-          k => probabilities[k] === found_range_val
-        )
-        const feature = features[__tmp_feature_id]
-        const size = feature_sizes[feature.id]
         let used_tiles = 0
         for (let xsize = 0; xsize < size; xsize += 1) {
           for (let ysize = 0; ysize < size; ysize += 1) {
@@ -276,9 +334,14 @@ export default class MapFactory {
       const __tmp_feature_id = feature_ids[i]
       const feature = features[__tmp_feature_id]
       const num_remaining = feature.quantity - feature.count
+
+      if (num_remaining <= 0 || num_tiles_remaining <= 0) {
+        probabilities[feature.id] = 0
+        continue
+      }
+
       const last_tile = feature.last_placed_tile
-      let chance =
-        num_tiles_remaining > 0 ? num_remaining / num_tiles_remaining : 0
+      let chance = num_remaining / num_tiles_remaining
 
       if (
         (feature.allow_touching !== 'always' &&
@@ -343,7 +406,7 @@ export default class MapFactory {
   getSurroundingTiles (tiles, x, y, grid_size, size) {
     size = size || 1
     let surrounding_tiles = []
-    let num_open_next_tiles = 0
+    let open_next_tiles = []
 
     for (let xi = -1; xi < size + 1; xi += 1) {
       let tile_x = x + xi
@@ -363,14 +426,18 @@ export default class MapFactory {
 
         const tile = tiles[tile_x][tile_y]
         const is_open = typeof tile === 'undefined'
+        const is_next = xi > 0 || yi > 0
         surrounding_tiles.push(tile)
-        num_open_next_tiles += is_open && (xi > 0 || yi > 0) ? 1 : 0
+        if (is_open && is_next) {
+          open_next_tiles.push({ x: tile_x, y: tile_y, })
+        }
       }
     }
 
     return {
       tiles: surrounding_tiles,
-      num_open_next_tiles,
+      open_next_tiles,
+      num_open_next_tiles: open_next_tiles.length,
     }
   }
 
