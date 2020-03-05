@@ -331,10 +331,16 @@ export default class MapFactory {
     for (let y = 0; y < grid_size; y += 1) {
       for (let x = 0; x < grid_size; x += 1) {
         let tile = tiles[x][y]
-        let valid_tile = tile === null || tile == IDS.FOREST_FEATURE_ID
-        if (!valid_tile) {
-          features[IDS.TERRAIN_FEATURE_ID].render_point_groups.push(terrain_set)
-          features[IDS.TERRAIN_FEATURE_ID].count += terrain_set.length
+        const is_last_tile = x === grid_size - 1
+        const is_valid_tile = tile === null || tile == IDS.FOREST_FEATURE_ID
+
+        if (is_last_tile || !is_valid_tile) {
+          // if (terrain_set.length > 2) {
+          //   features[IDS.TERRAIN_FEATURE_ID].render_point_groups.push(
+          //     terrain_set
+          //   )
+          //   features[IDS.TERRAIN_FEATURE_ID].count += terrain_set.length
+          // }
           terrain_set = []
           continue
         }
@@ -350,13 +356,9 @@ export default class MapFactory {
 
         let feature_points = this.generatePoint(min_position, max_position)
         terrain_set.push(feature_points)
-        tiles[x][y] += IDS.TERRAIN_FEATURE_ID
+        // tiles[x][y] += IDS.TERRAIN_FEATURE_ID
         num_tiles_remaining -= 1
       }
-
-      features[IDS.TERRAIN_FEATURE_ID].render_point_groups.push(terrain_set)
-      features[IDS.TERRAIN_FEATURE_ID].count += terrain_set.length
-      terrain_set = []
     }
 
     return {
